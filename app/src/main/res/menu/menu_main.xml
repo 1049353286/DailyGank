@@ -1,0 +1,18 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.apricot.dailygank.MainActivity">
+    <item
+        android:id="@+id/action_trending"
+        android:title="@string/action_github_trending"
+        android:orderInCategory="2"
+        app:showAsAction="never"/>
+
+    <item
+        android:id="@+id/action_notifiable"
+        android:title="@string/action_notifiable"
+        android:orderInCategory="3"
+        app:showAsAction="never"
+        android:checkable="true"
+        android:checked="true"/>
+</menu>
