@@ -49,7 +49,7 @@ public class GankListAdapter extends RecyclerView.Adapter<GankListAdapter.ViewHo
             }
         }
         holder.category.setText(gank.type);
-        holder.gank.setText(gank.desc+"via:"+gank.who);
+        holder.gank.setText(gank.desc+"(via:"+gank.who+")");
 
     }
 

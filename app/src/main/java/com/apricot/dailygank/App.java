@@ -10,13 +10,13 @@ import com.litesuits.orm.LiteOrm;
  */
 public class App extends Application{
     private static final String DB_NAME="gank.db";
-    public Context mContext;
+    public static Context mContext;
     public static LiteOrm DB;
     @Override
     public void onCreate() {
         super.onCreate();
         mContext=this;
-        DB=LiteOrm.newSingleInstance(mContext,DB_NAME);
+        DB=LiteOrm.newSingleInstance(this,DB_NAME);
         if(BuildConfig.DEBUG){
             DB.setDebugged(true);
         }

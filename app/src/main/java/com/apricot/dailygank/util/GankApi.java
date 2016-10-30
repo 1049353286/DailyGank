@@ -20,6 +20,6 @@ public interface GankApi {
             @Path("month") int month,
             @Path("day") int day);
 
-    @GET("/data/休息视频/" + MyRetrofitFactory.meiziSize + "/{page}") Observable<RestVideoData> getRestVideoData(
-            @Path("page") int page);
+//    @GET("/data/休息视频/" + MyRetrofitFactory.meiziSize + "/{page}") Observable<RestVideoData> getRestVideoData(
+//            @Path("page") int page);
 }

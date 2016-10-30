@@ -5,7 +5,6 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -45,8 +44,6 @@ public class    GankFragment extends Fragment{
     ViewStub mEmptyViewStub;
 //    @Bind(R.id.stub_video_view)
 //    ViewStub mVideoViewStub;
-    @Bind(R.id.iv_video)
-    VideoImageView mVideoImageView;
 
     int mYear, mMonth, mDay;
     List<Gank> mGankList;
@@ -172,6 +169,7 @@ public class    GankFragment extends Fragment{
     @Override
     public void onDestroy() {
         super.onDestroy();
+        ButterKnife.unbind(this);
         if(mSubscription!=null){
             mSubscription.unsubscribe();
         }

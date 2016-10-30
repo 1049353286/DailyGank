@@ -6,6 +6,7 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -44,6 +45,7 @@ import rx.functions.Func2;
  * Created by Apricot on 2016/5/10.
  */
 public class MainActivity extends ToolBarActivity implements SwipeRefreshLayout.OnRefreshListener{
+    public static final String TAG="MainActivity";
     @Bind(R.id.rv_meizi)
     RecyclerView mRecycleView;
     private MeiziListAdapter mMeiziListAdapter;
@@ -62,20 +64,21 @@ public class MainActivity extends ToolBarActivity implements SwipeRefreshLayout.
         super.onCreate(savedInstanceState);
         ButterKnife.bind(this);
         mMeiziList=new ArrayList<>();
-//        QueryBuilder query=new QueryBuilder(Meizi.class);
-//        query.appendOrderDescBy("publishedAt");
-//        query.limit(0, 10);
-//        mMeiziList.addAll(App.DB.<Meizi>query(query));
+        QueryBuilder query=new QueryBuilder(Meizi.class);
+        query.appendOrderDescBy("publishedAt");
+        query.distinct(true);
+        query.limit(0, 10);
+        mMeiziList.addAll(App.DB.<Meizi>query(query));
         initRecycleView();
         mSwipeRefreshLayout.setOnRefreshListener(this);
     }
 
-    @Override
-    protected void onPostCreate(Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
-        mSwipeRefreshLayout.setRefreshing(true);
-        loadData(true);
-    }
+//    @Override
+//    protected void onPostCreate(Bundle savedInstanceState) {
+//        super.onPostCreate(savedInstanceState);
+//        mSwipeRefreshLayout.setRefreshing(true);
+//        loadData(true);
+//    }
 
     void initRecycleView(){
         StaggeredGridLayoutManager staggeredGridLayoutManager=new StaggeredGridLayoutManager(2,StaggeredGridLayoutManager.VERTICAL);
@@ -161,24 +164,24 @@ public class MainActivity extends ToolBarActivity implements SwipeRefreshLayout.
                         return meiziData.results;
                     }
                 })
-                .flatMap(new Func1<List<Meizi>, Observable<Meizi>>() {
-                    @Override
-                    public Observable<Meizi> call(List<Meizi> meizis) {
-                        return Observable.from(meizis);
-                    }
-                })
-                .toSortedList(new Func2<Meizi, Meizi, Integer>() {
-                    @Override
-                    public Integer call(Meizi meizi, Meizi meizi2) {
-                        return meizi2.publishedAt.compareTo(meizi.publishedAt);
-                    }
-                })
-                .doOnNext(new Action1<List<Meizi>>() {
-                    @Override
-                    public void call(List<Meizi> meizis) {
-                        saveMeizis(meizis);
-                    }
-                })
+//                .flatMap(new Func1<List<Meizi>, Observable<Meizi>>() {
+//                    @Override
+//                    public Observable<Meizi> call(List<Meizi> meizis) {
+//                        return Observable.from(meizis);
+//                    }
+//                })
+//                .toSortedList(new Func2<Meizi, Meizi, Integer>() {
+//                    @Override
+//                    public Integer call(Meizi meizi, Meizi meizi2) {
+//                        return meizi2.publishedAt.compareTo(meizi.publishedAt);
+//                    }
+//                })
+//                .doOnNext(new Action1<List<Meizi>>() {
+//                    @Override
+//                    public void call(List<Meizi> meizis) {
+//                        saveMeizis(meizis);
+//                    }
+//                })
                 .observeOn(AndroidSchedulers.mainThread())
                 .finallyDo(new Action0() {
                     @Override
@@ -189,9 +192,12 @@ public class MainActivity extends ToolBarActivity implements SwipeRefreshLayout.
                 .subscribe(new Action1<List<Meizi>>() {
                     @Override
                     public void call(List<Meizi> meizis) {
-                        if (clean) mMeiziList.clear();
-                            mMeiziList.addAll(meizis);
-                            mMeiziListAdapter.notifyDataSetChanged();
+                        if (clean) {
+                            mMeiziList.clear();
+                        }
+                        mMeiziList.addAll(meizis);
+                        mMeiziListAdapter.notifyDataSetChanged();
+                        saveMeizis(meizis);
                     }
                 }, new Action1<Throwable>() {
                     @Override
@@ -225,8 +231,33 @@ public class MainActivity extends ToolBarActivity implements SwipeRefreshLayout.
 //        addSubscription(s);
     }
 
-    private void saveMeizis(List<Meizi> meizis){
-        App.DB.insert(meizis, ConflictAlgorithm.Replace);
+    private void saveMeizis(final List<Meizi> meizis){
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                List<Meizi> oldMeiziList=new ArrayList<Meizi>();
+                List<Meizi> newMeiziList=new ArrayList<Meizi>();
+                QueryBuilder query=new QueryBuilder(Meizi.class);
+                query.appendOrderDescBy("publishedAt");
+                query.limit(0, 10);
+                oldMeiziList.addAll(App.DB.<Meizi>query(query));
+                if(oldMeiziList.size()<1) {
+                    Log.e(TAG, "save meizi");
+                    App.DB.save(meizis);
+                }
+                if(oldMeiziList!=meizis&&oldMeiziList.size()>0){
+                    Meizi lastMeizi=oldMeiziList.get(0);
+                    for (int i=meizis.size()-1;i>=0;i--){
+                        if(lastMeizi.publishedAt.equals(meizis.get(i).publishedAt)&&i!=0){
+                            newMeiziList.addAll(meizis.subList(0,i));
+                            break;
+                        }
+                    }
+                    Log.e(TAG,"update meizi");
+                    App.DB.insert(newMeiziList,ConflictAlgorithm.Replace);
+                }
+            }
+        }).start();
     }
     private void loadError(Throwable t){
         t.printStackTrace();
